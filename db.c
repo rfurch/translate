@@ -73,9 +73,9 @@ if (toLanguageAlias == NULL)	{
 myQueryString = calloc(300 + strlen(original) + strlen(toLanguageAlias), sizeof(char));
 
 sprintf(myQueryString, "SELECT t.translation FROM translations t \
- LEFT JOIN languages l ON t.toLanguageID=l.id \
- LEFT JOIN expressionsCache e ON t.expressionID=e.id \
- WHERE l.alias='%s' AND e.englishExpression='%s';", toLanguageAlias, original);
+ LEFT JOIN languages l ON t.to_language_id=l.id \
+ LEFT JOIN expressions_cache e ON t.expression_id=e.id \
+ WHERE l.alias='%s' AND e.english_expression='%s';", toLanguageAlias, original);
  
  // send SQL query 
 if (mysql_query(conn, myQueryString))

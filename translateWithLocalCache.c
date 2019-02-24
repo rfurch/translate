@@ -204,13 +204,13 @@ int localTranslate(translationUserData *tud)
 MYSQL	*conn=NULL;
 int 	err=0;
 
-if ( (conn = localDBInit("127.0.0.1", "root", "root", "WMSTranslation")) == NULL )
-	return(-1);
-
-if ( (tud->translated = localDBSearch(conn, tud->original, tud->to)) == NULL )
+if ( (conn = localDBInit("127.0.0.1", "root", "root", "wms_translation")) == NULL )
+	err = -1;
+else if ( (tud->translated = localDBSearch(conn, tud->original, tud->to)) == NULL )
 	err = -1;
 	
 localDBClose(conn);
+mysql_library_end();
 return(err);
 }
 	
