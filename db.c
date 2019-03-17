@@ -116,71 +116,144 @@ return(localTranslation);
 
 //-------------------------------------------------------------------
 
+// get Language ID for given ALIAS  (eg: 'en'  -> 2 )
+// return -1 in case of error
+
+int localDBGetLanguageID(MYSQL *conn, char *languageAlias)
+{
+int 			languageID = -1;
+MYSQL_RES   	*res=NULL;
+MYSQL_ROW   	row;
+char 			*myQueryString=NULL;
+
+
+if (conn == NULL|| languageAlias == NULL)	{
+	fprintf(stderr, "\n localDBGetLanguageID ERROR:  NULL parameters !!! ");
+	return(-1);
+	}	
+	
+if ( (myQueryString = calloc(400 , sizeof(char))) == NULL )	{
+	fprintf(stderr, "\n localDBGetLanguageID ERROR:  allocation !!! ");
+	return(-1);
+	}	
+	
+sprintf(myQueryString, "SELECT id FROM wms_translation.languages WHERE alias LIKE '%s';", languageAlias);
+if (mysql_query(conn, myQueryString))      {
+	fprintf(stderr, "\n localDBGetLanguageID ERROR: %s",  mysql_error(conn));
+	return(-1);
+    }	
+
+if ( (res = mysql_store_result(conn)) == NULL )  	{
+	fprintf(stderr, "\n localDBGetLanguageID ERROR: %s",  mysql_error(conn));
+	return(-1);
+	}
+
+if (mysql_num_rows(res) > 0)
+    if  ((row = mysql_fetch_row(res))) 
+		languageID = atoi(row[0]);	
+	
+mysql_free_result(res);
+if (myQueryString)
+	free(myQueryString);	
+	
+return (languageID);	
+}
+
+
+//-------------------------------------------------------------------
+
+// get Language ID for given ALIAS  (eg: 'en'  -> 2 )
+// return -1 in case of error
+
+int localDBGetExpressionID(MYSQL *conn, char *englishExpression)
+{
+int 			expressionID = -1;
+MYSQL_RES   	*res=NULL;
+MYSQL_ROW   	row;
+char 			*myQueryString=NULL;
+
+if (conn == NULL || englishExpression == NULL)	{
+	fprintf(stderr, "\n localDBGetExpressionID ERROR:  NULL parameters !!! ");
+	return(-1);
+	}	
+	
+if ( (myQueryString = calloc(300 + strlen(englishExpression), sizeof(char))) == NULL )	{
+	fprintf(stderr, "\n localDBGetExpressionID ERROR:  allocation !!! ");
+	return(-1);
+	}	
+	
+sprintf(myQueryString, "SELECT id FROM wms_translation.expressions_cache WHERE english_expression='%s';", englishExpression);
+if (mysql_query(conn, myQueryString))    {
+	fprintf(stderr, "\n localDBGetExpressionID ERROR: %s",  mysql_error(conn));
+	return(-1);
+    }
+if ( (res = mysql_store_result(conn)) == NULL )   	{
+	fprintf(stderr, "\n localDBGetExpressionID ERROR: %s",  mysql_error(conn));
+	return(-1);
+	}
+
+if (mysql_num_rows(res) > 0)
+    if  ((row = mysql_fetch_row(res))) 
+		expressionID = atoi(row[0]);
+	
+mysql_free_result(res);
+if (myQueryString)
+	free(myQueryString);	
+	
+return (expressionID);	
+}
+
+//-------------------------------------------------------------------
+
 // this function inserts in local DB (MySQL) an spanish translation 
 // for original text (in english)
 
-int localDBInsertSpanishTranslation(MYSQL *conn, char *englishText, char *spanishText)
+int localDBInsertTranslation(MYSQL *conn, char *englishExpression, char *translatedExpression, char *toLanguage)
 {
-MYSQL_RES   	*res=NULL;
-MYSQL_ROW   	row;
-char 		*myQueryString=NULL;
-int 		englishExpressionID=0;
+char 			*myQueryString=NULL;
+int 			englishExpressionID=0;
+int 			languageID=-1;
 
-if (conn == NULL)	{
-	fprintf(stderr, "\n localDBInsertSpanishTranslation ERROR:  NULL DB handler!!! ");
-	return(-1);
-	}
-
-if (englishText == NULL)	{
-	fprintf(stderr, "\n localDBInsertSpanishTranslation ERROR:  NULL sentence !!! ");
-	return(-1);
-	}
-
-if (spanishText == NULL)	{
-	fprintf(stderr, "\n localDBInsertSpanishTranslation ERROR:  NULL toLanguageAlias !!! ");
+if (conn == NULL || englishExpression == NULL || translatedExpression == NULL || toLanguage == NULL)	{
+	fprintf(stderr, "\n localDBInsertTranslation ERROR:  NULL parameters !!! ");
 	return(-1);
 	}	
 
-if ( (myQueryString = calloc(300 + strlen(spanishText) + strlen(englishText), sizeof(char))) == NULL )	{
-	fprintf(stderr, "\n localTranslateSearch ERROR:  allocation !!! ");
+if ( (myQueryString = calloc(300 + strlen(englishExpression) + strlen(translatedExpression), sizeof(char))) == NULL )	{
+	fprintf(stderr, "\n localDBInsertTranslation ERROR:  allocation !!! ");
 	return(-1);
 	}	
 	
 // check if english expression is already present, just in case
-sprintf(myQueryString, "SELECT id FROM wms_translation.expressions_cache WHERE english_expression='%s';", englishText);
-if (mysql_query(conn, myQueryString))
-    {
-	fprintf(stderr, "\n localTranslateSearch ERROR: %s",  mysql_error(conn));
-	return(-1);
-    }
-if ( (res = mysql_store_result(conn)) == NULL )
-	{
-	fprintf(stderr, "\n localTranslateSearch ERROR: %s",  mysql_error(conn));
-	return(-1);
-	}
+if ( (englishExpressionID  = localDBGetExpressionID(conn, englishExpression) )  < 0 )      {
+    printf ("\n inserting NEW expression: %s", englishExpression);
 
-englishExpressionID = -1;
-if (mysql_num_rows(res) > 0)
-    if  ((row = mysql_fetch_row(res))) 
-	englishExpressionID = atoi(row[0]);
-    
-if ( englishExpressionID < 0 )
-    {
-    printf ("\n inserting NEW expression: %s", englishText);
-
-    sprintf(myQueryString, "INSERT INTO wms_translation.expressions_cache (english_expression) VALUES ('%s');", englishText);
-    if (mysql_query(conn, myQueryString))
-	{
-	    fprintf(stderr, "\n localTranslateSearch ERROR: %s",  mysql_error(conn));
+    sprintf(myQueryString, "INSERT INTO wms_translation.expressions_cache (english_expression) VALUES ('%s');", englishExpression);
+    if (mysql_query(conn, myQueryString))  		{
+	    fprintf(stderr, "\n localDBInsertTranslation ERROR: %s",  mysql_error(conn));
 	    return(-1);
-	}
-
-
-
-
+		}
+	// get ID of recently inserted expression (expression_cache) to insert into translations	
+	if ( (englishExpressionID  = localDBGetExpressionID(conn, englishExpression) )  <= 0 )  		{
+	    fprintf(stderr, "\n localDBInsertTranslation ERROR inserting into expressions_cache: %s",  mysql_error(conn));
+	    return(-1);
+		}	
+	
+	// get language ID for insertion
+	if ( (languageID = localDBGetLanguageID(conn, toLanguage) ) < 0 )   {
+	    fprintf(stderr, "\n localDBInsertTranslation ERROR getting language ID: %s",  mysql_error(conn));
+	    return(-1);
+		}	
+		
+		
+		// insert  into  translations	
+	sprintf(myQueryString, "INSERT INTO wms_translation.translations (expression_id, to_language_id, translation) VALUES (%i,%i,'%s');", englishExpressionID,languageID, translatedExpression);
+    if (mysql_query(conn, myQueryString))  		{
+	    fprintf(stderr, "\n localDBInsertTranslation ERROR: %s",  mysql_error(conn));
+	    return(-1);
+		}
     }   
     
-mysql_free_result(res);
 if (myQueryString)
 	free(myQueryString);
 	

@@ -83,7 +83,8 @@ size_t  writeHandler(void *ptr, size_t size, size_t nmemb, void *stream){
 	// get sub elements	
 	element1_1 = json_object_array_get_idx(element1, 0);
 	element1_1_1 = json_object_array_get_idx(element1_1, 0);
-	tud->translated = strdup( json_object_to_json_string_ext(element1_1_1, JSON_C_TO_STRING_SPACED | JSON_C_TO_STRING_PRETTY) );
+//	tud->translated = strdup( json_object_to_json_string_ext(element1_1_1, JSON_C_TO_STRING_SPACED | JSON_C_TO_STRING_PRETTY) );
+	tud->translated = strdup( json_object_get_string(element1_1_1) );
 
     free (str);
 	json_object_put(jobj);
@@ -204,7 +205,8 @@ int localTranslate(translationUserData *tud)
 MYSQL	*conn=NULL;
 int 	err=0;
 
-if ( (conn = localDBInit("192.168.254.20", "translation", "ndif4ctnE6", "wms_translation")) == NULL )
+//if ( (conn = localDBInit("192.168.254.20", "translation", "ndif4ctnE6", "wms_translation")) == NULL )
+if ( (conn = localDBInit("127.0.0.1", "root", "root", "wms_translation")) == NULL )
 	{
 	printf("\n localDBInit ERROR!");
 	err = -1;
@@ -228,13 +230,14 @@ int localInsert(translationUserData *tud)
 MYSQL	*conn=NULL;
 int 	err=0;
 
-if ( (conn = localDBInit("192.168.254.20", "translation", "ndif4ctnE6", "wms_translation")) == NULL )
+//if ( (conn = localDBInit("192.168.254.20", "translation", "ndif4ctnE6", "wms_translation")) == NULL )
+if ( (conn = localDBInit("127.0.0.1", "root", "root", "wms_translation")) == NULL )
 	{
 	printf("\n localDBInit ERROR!");
 	err = -1;
 	}
 else {
-    if (localDBInsertSpanishTranslation(conn, tud->original, tud->translated) < 0)
+    if (localDBInsertTranslation(conn, tud->original, tud->translated, tud->to) < 0)
 	{
 	printf("\n LocalInsert ERROR!");
 	err = -1;
