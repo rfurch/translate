@@ -204,11 +204,43 @@ int localTranslate(translationUserData *tud)
 MYSQL	*conn=NULL;
 int 	err=0;
 
-if ( (conn = localDBInit("127.0.0.1", "root", "root", "wms_translation")) == NULL )
+if ( (conn = localDBInit("192.168.254.20", "translation", "ndif4ctnE6", "wms_translation")) == NULL )
+	{
+	printf("\n localDBInit ERROR!");
 	err = -1;
+	}
 else if ( (tud->translated = localDBSearch(conn, tud->original, tud->to)) == NULL )
+	{
 	err = -1;
+	}
 	
+localDBClose(conn);
+mysql_library_end();
+return(err);
+}
+
+//---------------------------------------------------------------
+
+//  insert an english expression and its translation into local cache (DB)
+
+int localInsert(translationUserData *tud)
+{
+MYSQL	*conn=NULL;
+int 	err=0;
+
+if ( (conn = localDBInit("192.168.254.20", "translation", "ndif4ctnE6", "wms_translation")) == NULL )
+	{
+	printf("\n localDBInit ERROR!");
+	err = -1;
+	}
+else {
+    if (localDBInsertSpanishTranslation(conn, tud->original, tud->translated) < 0)
+	{
+	printf("\n LocalInsert ERROR!");
+	err = -1;
+	}
+    }	 
+	 
 localDBClose(conn);
 mysql_library_end();
 return(err);
@@ -230,7 +262,10 @@ if ( (err = localTranslate(tud)) >= 0 )
 else
 	{  // not found on local cache,  go to google...
 	if ( (err = googleFreeTranslate(tud)) >= 0 )
+		{    
 		printf("\n Translation: GOOGLE");	
+		localInsert(tud);
+		}
 	}
 
 return(err);	

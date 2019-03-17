@@ -9,3 +9,11 @@ C code to use Google translate API and local cache
 // the service) in which a KEY is assigned. 
 // the parsing procedures are similar (URI encode and JSON coding) 
 
+Remember to install libraries: 
+
+sudo yum install libcurl-devel.x86_64
+sudo yum install json-c-devel.x86_64
+
+
+
+

@@ -17,10 +17,10 @@ DEFS =  -DSIGTYPE=int -DDIRENT -DSTRSTR_MISSING \
 
 WARNING = -Wall
 CDEBUG = -g
-LIBS = -L/usr/lib -L /lib
+LIBS = -L/usr/lib -L /lib -L /usr/lib64/mysql
 CFLAGS =   $(DEFS) $(LIBS) $(CDEBUG) -I/usr/include/json-c/ -I. -I$(srcdir) -fPIC -g
 CPPFLAGS = $(CDEBUG) -I.  $(WARNING)
-LDFLAGS = -lpthread -lmysqlclient -lutil -lcurl -ljson-c
+LDFLAGS = -lpthread -lmysqlclient -lutil -lcurl -ljson-c -L /usr/lib64/mysql
 
 binaries := translateExample01 translateWithLocalCache
 objects := $(patsubst %.c,%.o,$(wildcard *.c))
